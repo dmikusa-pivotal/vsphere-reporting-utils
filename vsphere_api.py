@@ -10,6 +10,7 @@ from threading import Thread
 
 class VSphereApi:
     def __init__(self, args):
+        self.args = args
         self.service_instance = None
         self.objStore = VSphereObjectStore()
 
