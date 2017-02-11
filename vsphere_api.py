@@ -157,14 +157,13 @@ class VSphereApi:
             # search has finished.
             #  it returns a list of results, each of which has files
             results = search_req.info.result
-            # import pdb; pdb.set_trace()  # TODO: make this parse right
             for result in results:
                 if hasattr(result, 'file'):
                     for f in result.file:
                         if hasattr(f, 'path'):
                             dsf = DsFile(
                                 datastore=dsName,
-                                pathTo=results.folderPath,
+                                pathTo=result.folderPath,
                                 fileName=f.path,
                                 size=f.fileSize)
                             ctx.append(dsf)
