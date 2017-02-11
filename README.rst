@@ -10,11 +10,10 @@ Setup
 
 Currently the easiest way to run these is to do the following:
 
-1. Have python 2.7 installed (tested with 2.7.12).
-2. Run `virtualenv $(pwd)/env`.  If you don't have this install it with `pip install virtualenv`.
-3. Run `. ./env/bin/activate`.
-4. Run `pip install -r requirements.txt`.
-5. Run any of the utilities.
+1. Use git to clone the project
+2. Run `pip install .`
+
+Project is tested with Python 2.7.12.
 
 ---------
 Utilities
