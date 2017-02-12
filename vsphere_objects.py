@@ -44,6 +44,6 @@ class VSphereObjectStore:
             vms.append(vm_rec)
         return vms
 
-    def load_list_of_files_from_json(self, fileName):
+    def load_list_of_files_from_json(self):
         files_json = json.load(open(self.FILES_CACHE_FILE))
         return [DsFile._make(f) for f in files_json]
