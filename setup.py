@@ -21,7 +21,7 @@ setup(name='vsphere_reporting_utils',
         "Programming Language :: Python :: 2.7"
       ],
       keywords='vsphere reports',
-      install_requires=['pyvmomi', 'hurry.filesize'])
+      install_requires=['pyvmomi'])
 
 if os.path.exists('MANIFEST'):
     os.remove('MANIFEST')

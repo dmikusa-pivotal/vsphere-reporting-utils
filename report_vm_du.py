@@ -13,7 +13,7 @@ from operator import itemgetter
 from vsphere_api import VSphereApi
 from cli_helper import ArgBuilder
 from collections import defaultdict
-from hurry.filesize import size, alternative
+from utils import convert_size
 
 
 def main():
@@ -42,9 +42,9 @@ def main():
         for row in sorted(disk_usage.items(),
                           key=itemgetter(sort_order),
                           reverse=sort_order != 0):
-            print("    RP {:20} -> {:>7}".format(
-                row[0], size(row[1], system=alternative)))
-        print("Total Usage: {:>7}".format(size(total, system=alternative)))
+            print("    RP {:20} -> {}".format(
+                row[0], convert_size(row[1])))
+        print("Total Usage: {}".format(convert_size(total)))
     finally:
         if vApi:
             vApi.close()
