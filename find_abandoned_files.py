@@ -21,13 +21,38 @@ The script will print out a list of these files and the file sizes so that you
 can get a picture for how much space is being consumed by abandoned files.
 """
 from __future__ import print_function
+
+import os.path
+
 from vsphere_api import VSphereApi
-from cli_helper import get_args
-from collections import defaultdict
+from cli_helper import ArgBuilder
+
+
+def parse_ignore_list(args):
+    if not args.ignore:
+        args.ignore = []
+    if args.ignore_path:
+        if not os.path.exists(args.ignore_path):
+            print("[WARNING] ignore file does not exist, skipping")
+        else:
+            lines = open(args.ignore_path, 'r').readlines()
+            args.ignore.extend([line.strip() for line in lines])
 
 
 def main():
-    args = get_args()
+    ab = ArgBuilder()
+    ab.add_argument(
+        '-i', '--ignore',
+        required=False,
+        action='append',
+        help='list of directory paths to ignore')
+    ab.add_argument(
+        '--ignore_path',
+        required=False,
+        action='store',
+        help='path to a file of directories to ignore')
+    args = ab.process_args()
+    parse_ignore_list(args)
 
     try:
         vApi = None
@@ -36,18 +61,34 @@ def main():
         files = vApi.list_all_files()
         vms = vApi.list_all_vms()
 
-        # TODO: work out algorithm to detect disk files not attached to a VM
-        disk_usage = defaultdict(list)
+        # skip certain files
+        files = [f for f in files
+                 if not any([f.pathTo.find(s) != -1 for s in args.ignore])]
+
+        print()
+        print("Unaccounted file count [{}]".format(len(files)))
+        print("Removing known VMs from the list...")
         for vm in vms:
-            for disk in vm.disks:
-                disk_usage[vm.resourcePool].append(disk.size)
-        print("Disk Usage:")
-        total = 0
-        for rp in sorted(disk_usage.keys()):
-            subtotal = sum(disk_usage[rp]) / 1024.0 / 1024.0 / 1024.0
-            print("    RP {} -> {} GB".format(rp, subtotal))
-            total += subtotal
-        print("Total Usage: {} GB".format(total))
+            newFiles = []
+            for f in files:
+                # remove paths starting with VM name
+                if f.pathTo == '[{}] {}/'.format(f.datastore, vm.name):
+                    continue
+                # remove other references to VM files
+                vmDisksLoc = vm.path.split('/')[0]
+                if f.pathTo == '{}/'.format(vmDisksLoc):
+                    continue
+                # remove attached disks
+                if any([os.path.join(f.pathTo, f.fileName) == disk.path
+                        for disk in vm.disks]):
+                    continue
+                newFiles.append(f)
+            files = newFiles
+
+        print()
+        print("The following files are left ({}):".format(len(files)))
+        for f in files:
+            print("    {}".format(os.path.join(f.pathTo, f.fileName)))
     finally:
         if vApi:
             vApi.close()
