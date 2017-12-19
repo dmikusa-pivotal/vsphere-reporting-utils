@@ -24,6 +24,7 @@ from __future__ import print_function
 
 import os.path
 
+from collections import defaultdict
 from vsphere_api import VSphereApi
 from cli_helper import ArgBuilder
 
@@ -86,9 +87,48 @@ def main():
             files = newFiles
 
         print()
-        print("The following files are left ({}):".format(len(files)))
+        print("Found {} files that are unaccounted.".format(len(files)))
+        print("Investigating the remaining files...")
+        folders = defaultdict(list)
         for f in files:
-            print("    {}".format(os.path.join(f.pathTo, f.fileName)))
+            folders[f.pathTo].append(f.fileName)
+
+        # if file count is two, check if files are env.iso and env.json
+        print("  Folders with only `env.json` and `env.iso`...")
+        twoFileCnt = 0
+        for k, v in folders.items():
+            if len(v) == 2 and 'env.iso' in v and 'env.json' in v:
+                print("    {}".format(k))
+                twoFileCnt += 1
+        print("  ... count = {}".format(twoFileCnt))
+
+        print("  Folders with one file...")
+        oneFileCnt = 0
+        for k, v in folders.items():
+            if len(v) == 1:
+                print("    {}".format(k))
+                oneFileCnt += 1
+        print("  ... count = {}".format(oneFileCnt))
+
+        print("  Folders that are empty...")
+        emptyCnt = 0
+        for k, v in folders.items():
+            if len(v) == 0:
+                print("    {}".format(k))
+                emptyCnt += 1
+        print("  ... count = {}".format(emptyCnt))
+
+        print("  Folders with more than two files...")
+        moreThanTwoCnt = 0
+        for k, v in folders.items():
+            if len(v) > 2:
+                print("    {}".format(k))
+                moreThanTwoCnt += 1
+        print("  ... count = {}".format(moreThanTwoCnt))
+
+        # TODO: just like VM folders, the persistent disk folders are listed
+        #        under two different names.  One is a id of sorts and the
+        #        other is a friendly name.
     finally:
         if vApi:
             vApi.close()

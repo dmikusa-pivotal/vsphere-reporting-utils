@@ -114,8 +114,8 @@ class VSphereApi:
         if self.args.cache and self.objStore.files_cache_exists():
             files = self.objStore.load_list_of_files_from_json()
         else:
-            # can use `load_all_files_from_search_api` instead
-            files = self.load_all_files_from_api()
+            files = self.load_all_files_from_search_api()
+            # files = self.load_all_files_from_api()
             if self.args.cache:
                 self.objStore.save_list_of_files_to_json(files)
         return files
@@ -154,6 +154,7 @@ class VSphereApi:
             search_req = ds.browser.SearchSubFolders(
                 "[{}] /".format(dsName), search)
             count = 0
+            # TODO: doesn't handle error cases, will fail forever
             while search_req.info.state != "success":
                 time.sleep(1.0)  # wait a bit so we don't hammer the server
                 count += 1
@@ -170,6 +171,8 @@ class VSphereApi:
                 if hasattr(result, 'file'):
                     for f in result.file:
                         if hasattr(f, 'path'):
+                            # TODO: check if results have duplicate folders
+                            # i.e. folder friendly name and folder guid
                             dsf = DsFile(
                                 datastore=dsName,
                                 pathTo=result.folderPath,
@@ -283,6 +286,8 @@ class VSphereApi:
         #   but it's a list and we're only appending so it should be OK
         #     https://stackoverflow.com/questions/6319207/are-lists-thread-safe
         ctx = []
+        # TODO: there will be duplicates: one for folder name and one for folder guid
+        #  figure out how to strip out the dups
         for f in self.load_all_files_from_ds_under_path(ds, '/'):
             q.put((ctx, f.fileName))
 
